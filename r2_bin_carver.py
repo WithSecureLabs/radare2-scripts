@@ -62,7 +62,7 @@ def patch(file_path):
         print('\tSetting PointerToRawData to 0x%x' % (VirtualAddress))
         r2.cmd('wv %i @ %i' % (VirtualAddress, addr + 0x14))
 
-    print('[+] Pathing done')
+    print('[+] Patching done')
 
 
 def main():
