@@ -19,8 +19,13 @@ except ImportError as err:
 
 
 CALLING_CONVENTIONS = {
-    'doublepulsar': ['movabs', 'call'],  # movabs xxx; call yyy
-    'metasploit': ['push', 'call']       # push xxx; call xxx'
+    'doublepulsar': [
+        ('movabs', 'call')  # movabs xxx; call yyy
+    ],
+    'metasploit': [
+        ('push', 'call'),  # push xxx; call xxx - 32bit
+        ('mov', 'call')    # mov xxx; call xxx - 64bit
+    ]
 }
 TECHNIQUES = [
     'doublepulsar',
@@ -155,20 +160,22 @@ def analyse(connection, technique):
             next_op = asm[i + 1]
             if op['size'] == 0 or next_op['size'] == 0:
                 break
-            if next_op['opcode'].startswith(CALLING_CONVENTIONS[technique][1]):
-                args = op['opcode'].split(" ")
-                if args[0] == CALLING_CONVENTIONS[technique][0]:
-                    try:
-                        h = int(args[-1], 16) & 0xFFFFFFFF
-                    except:
-                        continue
-                    c.execute(sql_command, (technique, h,))
-                    result = c.fetchone()
-                    if result:
-                        print("|_ 0x%.08x\t\t%s\t\t%s!%s" %
-                              (op['offset'], op['opcode'], result[0], result[1]))
-                        r2.cmd("CCu %s!%s @ %u" %
-                               (result[0], result[1], op['offset']))
+            for cc in CALLING_CONVENTIONS[technique]:
+                if next_op['opcode'].startswith(cc[1]):
+                    args = op['opcode'].split(" ")
+                    if args[0] == cc[0]:
+                        try:
+                            h = int(args[-1], 16) & 0xFFFFFFFF
+                        except:
+                            continue
+                        c.execute(sql_command, (technique, h,))
+                        result = c.fetchone()
+                        if result:
+                            print("|_ 0x%.08x\t\t%s\t\t%s!%s" %
+                                  (op['offset'], op['opcode'], result[0], result[1]))
+                            r2.cmd("CCu %s!%s @ %u" %
+                                   (result[0], result[1], op['offset']))
+                            break
 
         print("")
 
