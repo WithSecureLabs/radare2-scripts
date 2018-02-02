@@ -161,7 +161,7 @@ def analyse(connection, technique):
             if op['size'] == 0 or next_op['size'] == 0:
                 break
             for cc in CALLING_CONVENTIONS[technique]:
-                if next_op['opcode'].startswith(cc[1]):
+                if 'opcode' in next_op and next_op['opcode'].startswith(cc[1]):
                     args = op['opcode'].split(" ")
                     if args[0] == cc[0]:
                         try:
